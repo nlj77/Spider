@@ -23,7 +23,7 @@ There are key requirements for every step of the project:
 8. The RezDox Admin part of this assignment should be done in a single session, rather than multiple logins.
 9. Memory utilization with streaming files to the file system will need to be managed. 
 10. Make sure the code is reusable, and stable. KEEP IT DRY. 
-## Screenshots
+## Outline and Graphics
 
 ![App Outline](https://github.com/nlj77/Spider/blob/main/lib/src/main/resources/Spider%20Project%20Outline%20Draft(3).png)
 
