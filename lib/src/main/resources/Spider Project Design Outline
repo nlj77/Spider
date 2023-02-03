@@ -1,0 +1,30 @@
+#Spider Project Design Outline
+
+/*Classes Needed:
+
+Websocket Class to establish a connection with a web page
+Login Class with functions for holding session data, passing in initial login info. Retrieving login info as a ENV variable in a unpushed local file. 
+Import FileReaderWriter class to write and save HTML pages
+Scraper class that grabs a webpage, parses it with JSOUP, and uses FRW to save to a location on the user's file directory
+Manager Class to handle tracking saved links, visited links, and unsaved links. Establishes a queue.
+Main runner class to handle calling the other classes on both the staging silicon mountain site, and the rezdox websocket site. 
+*/
+
+
+/*Establish Websocket
+	The websocket will need to be able to handle a HTTPS connection. SSLSocket, or SSLSocketFactory should be used instead of the regular Socket import.
+	Retrieve the correct address on the correct port (443).
+*/
+
+/*Login Class
+	Retrieve username and password as ENV variables from a config file on local machine.
+	Optionally create method for creating new user name and password on local machine, or adding one. 
+	Retrieve JSON Session ID and parse it to a variable to save
+	Pass through variable as cookie to stay logged into same session through every page. 
+*/
+
+/*Scraper Class
+	imports FRW, loads HTML file to memory, bufferedreader, writes to file on file system
+	File location should be set to be a location usable on other machines.
+	Parse HTML and save to file with JSOUP
+*/
