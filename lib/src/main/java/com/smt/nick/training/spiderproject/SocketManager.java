@@ -2,14 +2,29 @@
 package com.smt.nick.training.spiderproject;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import lombok.Data;
 
 
 
@@ -27,7 +42,7 @@ import javax.net.ssl.SSLSocketFactory;
  * @since Feb 03 2023
  * @updates:
  ****************************************************************************/
-
+@Data
 public class SocketManager {
 	
 	// Declares a logger object. For scaling purposes, being able to log successes
@@ -37,15 +52,21 @@ public class SocketManager {
 	// different user's local repo
 	static final String DIR = System.getProperty("user.dir");
 	// This sets the output variable to the user's directory plus
-	static final String OUTPUTLOCATION = DIR + "/src/main/resources/";
-
+	static final String STARTLOCATION = DIR + "/src/main/resources/homepage.html";
+	private  URL url = null;
+	//This hashmap will be used to store URLs and determine if they've been visited and saved yet.
+	Map<Object, Boolean> urlQueue = new HashMap<Object, Boolean>();
 	static final int PORT = 443;
 //	static final String ADDRESS = "https://smt-stage.qa.siliconmtn.com";
-	static final String ADDRESS = "52.35.80.214";
+	static final String BASEURI = "https://smt-stage.qa.siliconmtn.com/";
+	private String address = null;
 
+	
     public static void main(String[] args) throws Exception {
     	SocketManager socketManager = new SocketManager();
-    	socketManager.getWebPage(ADDRESS, PORT);
+    	URL hostURL = new URL("https://smt-stage.qa.siliconmtn.com/");
+    	socketManager.writeHTMLToFile(STARTLOCATION, socketManager.getWebPage("smt-stage.qa.siliconmtn.com", PORT));
+    	socketManager.addURLsToQueue(STARTLOCATION);
     }
     /**
      * 
@@ -54,19 +75,22 @@ public class SocketManager {
      * @return a StringBuilder html object to save
      */
 	public StringBuilder getWebPage(String host, int portNumber) {
-		
+
 		//instantiates a new Stringbuilder object called html
 		StringBuilder html = new StringBuilder();
 		//try with resources creates a new socket object from the fed in portNumber and host
+		
 		try {
 			SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 			SSLSocket socket = (SSLSocket) factory.createSocket(host, portNumber);
+			//logs to console that a socket has been successfully created
 			logger.log(Level.INFO, "Socket Created");
-
+			
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			logger.log(Level.INFO, "Streams Created");
-			out.writeBytes("GET /HTTP/1.1 \r\n");
+			out.writeBytes("GET / HTTP/1.0 \r\n");
+			out.writeBytes("Host: " + host + "\r\n");
 			out.writeBytes("\r\n");
 			out.flush();
 			String inData = null;
@@ -80,15 +104,39 @@ public class SocketManager {
 		return html;
 	}
 	
-	public void writeHTMLToFile(String OUTPUTLOCATION, StringBuilder htmlDoc) {
-		FileReaderWriter myFRW = new FileReaderWriter();
-		myFRW.setFileNameOutput(OUTPUTLOCATION);
-		try {
-			myFRW.writeFile(htmlDoc, OUTPUTLOCATION);
-		} catch (IOException e) {
-			logger.log(Level.INFO, "Could not successfully write document", e);
+	public void setUrl(String urlString) throws MalformedURLException {
+		this.url = new URL(urlString);
+	}
+	public void writeHTMLToFile(String outputPath, StringBuilder htmlDoc) throws IOException {
+		String htmlDocStr = htmlDoc.toString();
+		FileWriter writer = new FileWriter(outputPath);  
+	    try (BufferedWriter buffer = new BufferedWriter(writer)) {
+			try {
+				buffer.write(htmlDocStr);
+			} catch (IOException e) {
+				logger.log(Level.INFO, "Could not successfully write document", e);
+			}
 		}
+	}
+	
+	public void parseHTML() {
+		
+	}
 
+	public void addURLsToQueue(String fileLocation) throws IOException {
+		File input = new File(fileLocation);
+		Document doc = Jsoup.parse(input);
+//		System.out.println(doc);
+
+		Element content = doc.getElementById("content");
+
+
+		Elements links = doc.select("a[href]"); // a with href
+		for (Element link : links) {
+			urlQueue.put(link, false);
+			System.out.println(link + "\r\n");
+
+		}
 	}
 
 }

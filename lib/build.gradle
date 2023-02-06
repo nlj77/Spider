@@ -29,6 +29,10 @@ dependencies {
     // This dependency adds JSOUP configuration, for use with parsing HTML documents.
     implementation 'org.jsoup:jsoup:1.15.3'
     
+
+    
+    
+    
 }
 
 tasks.named('test') {
