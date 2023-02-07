@@ -5,6 +5,8 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,6 +24,7 @@ import javax.net.ssl.SSLSocketFactory;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
 import lombok.Data;
@@ -50,23 +53,20 @@ public class SocketManager {
 	final Logger logger = Logger.getLogger(StringBuilder.class.getName());
 	// Gets the working directory from the user, if this is cloned and pulled to a
 	// different user's local repo
-	static final String DIR = System.getProperty("user.dir");
+	static final String DIR = System.getProperty("user.dir") + "/src/main/resources/";
 	// This sets the output variable to the user's directory plus
-	static final String STARTLOCATION = DIR + "/src/main/resources/homepage.html";
-	private  URL url = null;
+	static final String STARTLOCATION = DIR + "homepage.html";
 	//This hashmap will be used to store URLs and determine if they've been visited and saved yet.
-	Map<Object, Boolean> urlQueue = new HashMap<Object, Boolean>();
+	private Map<Object, Boolean> urlQueue = new HashMap<Object, Boolean>();
 	static final int PORT = 443;
-//	static final String ADDRESS = "https://smt-stage.qa.siliconmtn.com";
-	static final String BASEURI = "https://smt-stage.qa.siliconmtn.com/";
+	static final String ADDRESS = "smt-stage.qa.siliconmtn.com";
 	private String address = null;
 
 	
     public static void main(String[] args) throws Exception {
     	SocketManager socketManager = new SocketManager();
-    	URL hostURL = new URL("https://smt-stage.qa.siliconmtn.com/");
-    	socketManager.writeHTMLToFile(STARTLOCATION, socketManager.getWebPage("smt-stage.qa.siliconmtn.com", PORT));
-    	socketManager.addURLsToQueue(STARTLOCATION);
+    	StringBuilder myHTML = socketManager.getWebPage(ADDRESS, PORT);
+    	socketManager.parseHTML(socketManager.writeHTMLToFile(myHTML));
     }
     /**
      * 
@@ -100,43 +100,76 @@ public class SocketManager {
 		} catch (Exception e) {
 			logger.log(Level.INFO, "Unable to connect to Server", e);
 		}
-
 		return html;
 	}
 	
-	public void setUrl(String urlString) throws MalformedURLException {
-		this.url = new URL(urlString);
-	}
-	public void writeHTMLToFile(String outputPath, StringBuilder htmlDoc) throws IOException {
-		String htmlDocStr = htmlDoc.toString();
-		FileWriter writer = new FileWriter(outputPath);  
-	    try (BufferedWriter buffer = new BufferedWriter(writer)) {
+
+	public String writeHTMLToFile(StringBuilder htmlDoc) throws IOException {
+		String htmlDocStr = htmlDoc.toString().toLowerCase();
+		String title = htmlDocStr.substring(htmlDocStr.indexOf("<title>") + 7, htmlDocStr.indexOf("</title>"));
+		String savedFilePath = (DIR + title + ".html");
+		FileWriter input = new FileWriter(savedFilePath); 
+
+	    try (BufferedWriter buffer = new BufferedWriter(input)) {
 			try {
 				buffer.write(htmlDocStr);
 			} catch (IOException e) {
 				logger.log(Level.INFO, "Could not successfully write document", e);
 			}
 		}
+	    return savedFilePath;
 	}
 	
-	public void parseHTML() {
-		
-	}
+	public Map<Object, Boolean> parseHTML(String htmlPath) {
+		try {
+			File input = new File(htmlPath);
 
-	public void addURLsToQueue(String fileLocation) throws IOException {
-		File input = new File(fileLocation);
-		Document doc = Jsoup.parse(input);
-//		System.out.println(doc);
+			Document doc = Jsoup.parse(input, "UTF-8", "http://example.com/");
+			Elements links = doc.select("a[href]");
+			System.out.println(links);
+			for (Element link : links) {
+				urlQueue.put(link, false);
+			}
 
-		Element content = doc.getElementById("content");
-
-
-		Elements links = doc.select("a[href]"); // a with href
-		for (Element link : links) {
-			urlQueue.put(link, false);
-			System.out.println(link + "\r\n");
-
+		} catch (FileNotFoundException e) {
+			logger.log(Level.INFO, "Could not find file", e);
+		} catch (IOException e) {
+			logger.log(Level.INFO, "Could not successfully parse links", e);
 		}
+		System.out.println(urlQueue.keySet());
+		return urlQueue;
+	}
+	
+
+//	public Map<Object, Boolean> addURLsToQueue(String fileLocation) throws IOException {
+//		File input = new File(fileLocation);
+//		Document doc = Jsoup.parse(input);
+////		System.out.println(doc);
+//
+//		Elements links = doc.getElementsContainingText("a href='/");
+//		System.out.println(links);
+//		for (Element link : links) {
+//			urlQueue.put(link, false);
+//			System.out.println(link + "\r\n");
+//		}
+//		return urlQueue;
+//	}
+	
+	public void saveQueueURLsAsHTMLs(Map<Object, Boolean> urls) {
+		 for(Object obj: urls.keySet()) {
+			 urls.put(obj, true);
+			 String outputLocation = DIR + ((Node) obj).attr("abs:href") + ".html";
+			 System.out.println(outputLocation + " was created");
+			 Element link = ((Element) obj).select("a").first();
+			 String absHref = link.attr("abs:href");
+			 try {
+				writeHTMLToFile(getWebPage(absHref, PORT));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				logger.log(Level.INFO, "Could not successfully save HTMLs in queue", e);
+			}
+		 }
+		
 	}
 
 }
