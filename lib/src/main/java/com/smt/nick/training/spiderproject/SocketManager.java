@@ -103,6 +103,10 @@ public class SocketManager {
 		return html;
 	}
 	
+	public void writeQueueToFiles(Map <Object, Boolean> queue) {
+		
+	}
+	
 
 	public String writeHTMLToFile(StringBuilder htmlDoc) throws IOException {
 		String htmlDocStr = htmlDoc.toString().toLowerCase();
@@ -131,7 +135,7 @@ public class SocketManager {
 				 if(linkHref.contains("tel") || linkHref.contains("mailto") || linkHref.length() <= 1) {
 					 continue;
 				 }
-				urlQueue.put(linkHref, false);
+				urlQueue.put(link, false);
 			}
 
 		} catch (FileNotFoundException e) {
