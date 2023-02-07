@@ -126,9 +126,12 @@ public class SocketManager {
 
 			Document doc = Jsoup.parse(input, "UTF-8", "http://example.com/");
 			Elements links = doc.select("a[href]");
-			System.out.println(links);
 			for (Element link : links) {
-				urlQueue.put(link, false);
+				 String linkHref = link.attr("href");
+				 if(linkHref.contains("tel") || linkHref.contains("mailto") || linkHref.length() <= 1) {
+					 continue;
+				 }
+				urlQueue.put(linkHref, false);
 			}
 
 		} catch (FileNotFoundException e) {
@@ -136,7 +139,7 @@ public class SocketManager {
 		} catch (IOException e) {
 			logger.log(Level.INFO, "Could not successfully parse links", e);
 		}
-		System.out.println(urlQueue.keySet());
+		System.out.println(urlQueue.keySet() + "\r\n");
 		return urlQueue;
 	}
 	
