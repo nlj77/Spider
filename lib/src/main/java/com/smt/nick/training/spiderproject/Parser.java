@@ -1,13 +1,12 @@
-
+//JDK 17
 package com.smt.nick.training.spiderproject;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,7 +20,8 @@ import lombok.Data;
 /****************************************************************************
  * <b>Title:</b> Parser.java<br>
  * <b>Project:</b> Spider-lib<br>
- * <b>Description:</b> <br>
+ * <b>Description:</b>This parser class is used with my Spider app to strip HTML elements from a given String of an HTML page,
+ *  and parse them into a queue <br>
  * <b>Copyright:</b> Copyright (c) 2023<br>
  * <b>Company:</b> Silicon Mountain Technologies<br>
  * 
@@ -43,52 +43,11 @@ public class Parser {
 	// different user's local repo
 	static final String DIR = System.getProperty("user.dir") + "/src/main/resources/";
 	
-	
-	  public static void main(String[] args) throws IOException {
-	    	SocketManager sock = new SocketManager();
-	    	Parser parser = new Parser();
-	    	sock.setRootUrl("https://smt-stage.qa.siliconmtn.com");
-	    	System.out.println(sock.getRootUrl());
-	    	parser.writeHTMLToFile((sock.getWebPage(sock.getRootUrl(), PORT)), sock);
-	    	parser.parseHTML(parser.writeHTMLToFile((sock.getWebPage(sock.getRootUrl(), PORT)), sock), sock);
-	    }
+	    //Constructor with a new urlMap object for funneling in urls
 		public Parser() {
 			urlMap = new HashMap<>();
 		}
 		
-		public void writeQueueToFiles(Map<String, Boolean> urls, SocketManager socket) {
-			
-		}
-	/**
-	 * 
-	 * @param htmlDoc this is the return type of the SocketManager getWebpage function
-	 * @param socket this is the socket manager object
-	 * @return
-	 * @throws IOException if file couldn't be handled
-	 */
-	public String writeHTMLToFile(StringBuilder htmlDoc, SocketManager socket) throws IOException {
-		//creates a string from the StringBuilder htmlDoc, that SocketManager getWebPage returns
-		String htmlDocStr = htmlDoc.toString().toLowerCase();
-		//pulls the title from the htmlDoc, this is useful for displaying progress or checking for errors
-		String title = htmlDocStr.substring(htmlDocStr.indexOf("<title>") + 7, htmlDocStr.indexOf("</title>"));
-		//creates a savedFilePath using DIR and the title
-		String savedFilePath = (SocketManager.DIR + title + ".html");
-		//Creates a new FileWriter Object at the savedFilePath location
-		FileWriter input = new FileWriter(savedFilePath); 
-		//Try with resources, create a BufferedWriter object and use the input location
-	    try (BufferedWriter buffer = new BufferedWriter(input)) {
-	    	//Try to write the htmlDocStr
-			try {
-				buffer.write(htmlDocStr);
-			//Write to logger if there's an interface option exception
-			} catch (IOException e) {
-				logger.log(Level.INFO, "Could not successfully write document", e);
-			}
-		}
-	    //log if successful
-		logger.log(Level.INFO, "Created " + savedFilePath + " file in " + SocketManager.DIR);
-	    return savedFilePath;
-	}
 	/**
 	 * 
 	 * @param htmlPath this is the string for the saved file path of the designated starting url
@@ -97,27 +56,56 @@ public class Parser {
 	 */
 	public Map<String, Boolean> parseHTML(String htmlPath, SocketManager socket) {
 		try {
+			//Create a new file from a given file path for input
 			File input = new File(htmlPath);
-
-			Document doc = Jsoup.parse(input, "UTF-8", socket.getRootUrl());
+			//Create a Document object from JSOUP, specify encoding as UTF-8, use file input, and get the root url for parsing purposes.
+			Document doc = Jsoup.parse(input, "UTF-8", socket.getRootURL());
+			//Create a set of links from doc by pulling out every element with a a[href] tag
 			Elements links = doc.select("a[href]");
+			//Instantiate a loop for every link in links
 			for (Element link : links) {
+				 //Assign link to a String
 				 String linkHref = link.attr("href");
+				 //if the link contains telephone, or a mailer, or if it's shorter than 1, skip it, and continue the loop
 				 if(linkHref.contains("tel") || linkHref.contains("mailto") || linkHref.length() <= 1) {
 					 continue;
 				 }
-				logger.log(Level.INFO, "Created " + linkHref + " file in " + DIR);
-//				writeHTMLToFile(getWebPage(linkHref, PORT));
-				urlMap.put(linkHref, true);
+				//put the link into the urlMap, and give it the value of false, as it hasn't been saved yet
+				urlMap.put(linkHref, false);
 			}
-
+		//throw error if file is not found
 		} catch (FileNotFoundException e) {
 			logger.log(Level.INFO, "Could not find file", e);
+		//log error if links can't be returned
 		} catch (IOException e) {
 			logger.log(Level.INFO, "Could not successfully parse links", e);
 		}
-		System.out.println(urlMap);
 		return urlMap;
+	}
+	
+	/**
+	 * 
+	 * @param writer fed in writer object
+	 * @param sock fed in sock object for use of get page methods
+	 * @throws IOException if sock get page isn't found
+	 */
+	public void parseQueue(Writer writer, SocketManager sock) throws IOException {
+		//loop through every key in urlMap.entryset
+		 for (Entry<String, Boolean> entry : getUrlMap().entrySet()) {
+			 	//assign route "/contact" for example, to a String, this prevents concurrent modification exceptions
+				String route = entry.getKey();
+				//Call parse HTML function on the StringBuilder object that writeHTMLToFile returns, and the given SocketManager Sock object
+				parseHTML(
+				writer.writeHTMLToFile(
+						sock.getPage(sock.getRootURL(), route, PORT)
+						),
+			        sock);
+			  //As that file has been written, we now want to update the entry's value to true
+	          getUrlMap().put(entry.getKey(), true);
+	      //Log the path as saved
+ 		  logger.log(Level.INFO, "Key = " + route +
+                   ", Value = " + entry.getValue() + " " + sock.getRootURL()+ route);
+ 	 }
 	}
 
 }

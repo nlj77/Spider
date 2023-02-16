@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
 /****************************************************************************
  * <b>Title:</b> Writer.java<br>
  * <b>Project:</b> Spider-lib<br>
@@ -25,13 +26,11 @@ public class Writer {
 	// and errors will be useful if I add functionality to my lang pack
 	final Logger logger = Logger.getLogger(StringBuilder.class.getName());
 
-	public Writer() {
-	}
-	public String writeHTMLToFile(StringBuilder htmlDoc, SocketManager socket) throws IOException {
+	public String writeHTMLToFile(StringBuilder htmlDoc) throws IOException {
 		//creates a string from the StringBuilder htmlDoc, that SocketManager getWebPage returns
-		String htmlDocStr = htmlDoc.toString().toLowerCase();
+		String htmlDocStr = htmlDoc.toString();
 		//pulls the title from the htmlDoc, this is useful for displaying progress or checking for errors
-		String title = htmlDocStr.substring(htmlDocStr.indexOf("<title>") + 7, htmlDocStr.indexOf("</title>"));
+		String title = htmlDocStr.substring(htmlDocStr.indexOf("<title>") + 7, htmlDocStr.indexOf("</title>")).toLowerCase();
 		//creates a savedFilePath using DIR and the title
 		String savedFilePath = (SocketManager.DIR + title + ".html");
 		//Creates a new FileWriter Object at the savedFilePath location
@@ -47,7 +46,8 @@ public class Writer {
 			}
 		}
 	    //log if successful
-		logger.log(Level.INFO, "Created " + savedFilePath + " file in " + SocketManager.DIR);
+//		logger.log(Level.INFO, "Created " + savedFilePath + " file in " + SocketManager.DIR);
+
 	    return savedFilePath;
 	}
 
