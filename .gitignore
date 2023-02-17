@@ -10,3 +10,5 @@ gradle/
 bin/
 .DS_Store
 .attach*
+.src/main/resources/output
+
