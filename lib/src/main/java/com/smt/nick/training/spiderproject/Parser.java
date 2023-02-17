@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,6 +35,8 @@ import lombok.Data;
 public class Parser {
 	// this sets up a variable to store the starting link String is the url, and boolean for saved true or false
 	private HashMap<String, Boolean> urlMap;
+	// Set up a new HashMap of cookies
+	private Set<String> cookies;
 	// Declares a logger object. For scaling purposes, being able to log successes
 	// and errors will be useful if I add functionality to my lang pack
 	final Logger logger = Logger.getLogger(StringBuilder.class.getName());
@@ -107,5 +110,7 @@ public class Parser {
                    ", Value = " + entry.getValue() + " " + sock.getRootURL()+ route);
  	 }
 	}
+	
+
 
 }
